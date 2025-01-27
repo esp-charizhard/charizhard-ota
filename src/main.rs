@@ -25,7 +25,7 @@ impl MinioInstance {
         // setup database config
         let provider = match StaticProvider::from_env() {
             Some(provider) => provider,
-            None => return Err(Error::msg("Env varibles not found")),
+            None => return Err(Error::msg("Env variables not found!")),
         };
 
         let minio = Minio::builder()
@@ -82,7 +82,9 @@ async fn main() -> Result<(), Error> {
     );
 
     let minstance = MinioInstance::new()?;
-    let router = public_router(minstance.clone()).merge(protected_router(keycloak_auth_instance, minstance.clone())).fallback(fallback);
+    let router = public_router(minstance.clone())
+        .merge(protected_router(keycloak_auth_instance, minstance.clone()))
+        .fallback(fallback);
 
     // 0.0.0.0 signifie qu'on écoute sur toutes les nci
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8081").await?;

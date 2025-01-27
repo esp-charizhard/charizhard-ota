@@ -1,4 +1,7 @@
-use std::{env::{self, VarError}, usize};
+use std::{
+    env::{self, VarError},
+    usize,
+};
 
 //todo clean the the useless unwraps by using anyhow-error response
 use async_std::{
@@ -144,18 +147,20 @@ pub async fn post_firmware(
     let executor = instance.executor(Method::POST);
     let body = request.into_body();
     let bytes = axum::body::to_bytes(body, usize::MAX).await.unwrap();
-    let query = executor.bucket_name(FIRMWARE_DIR).object_name(file_name).body(bytes).send_ok().await;
+    let query = executor
+        .bucket_name(FIRMWARE_DIR)
+        .object_name(file_name)
+        .body(bytes)
+        .send_ok()
+        .await;
     match query {
-        Ok(_) => {
+        Ok(_) => return (StatusCode::OK, format!("Firmware successfully uploaded !")),
+        Err(e) => {
             return (
-                StatusCode::OK,
-                format!("Firmware successfully uploaded !"),
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Error uploading firmware {}", e),
             )
         }
-        Err(e) => return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Error uploading firmware {}", e),
-        ),
     }
 }
 
@@ -167,18 +172,19 @@ pub async fn delete_firmware(
     State(instance): State<Minio>,
 ) -> (StatusCode, std::string::String) {
     let executor = instance.executor(Method::DELETE);
-    let query = executor.bucket_name(FIRMWARE_DIR).object_name(file_name).send_ok().await;
+    let query = executor
+        .bucket_name(FIRMWARE_DIR)
+        .object_name(file_name)
+        .send_ok()
+        .await;
     match query {
-        Ok(_) => {
+        Ok(_) => return (StatusCode::OK, format!("Firmware successfully deleted !")),
+        Err(e) => {
             return (
-                StatusCode::OK,
-                format!("Firmware successfully deleted !"),
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Error deleting firmware {}", e),
             )
         }
-        Err(e) => return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Error deleting firmware {}", e),
-        ),
     }
 }
 

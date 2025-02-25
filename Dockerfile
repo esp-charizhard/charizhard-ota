@@ -5,7 +5,7 @@ FROM scratch
 ARG TARGET=x86_64-unknown-linux-musl
 
 # Copy the binary from the CI build context
-COPY ./target/$TARGET/release/charizhard-ota /prog
+COPY ./target/$TARGET/release/charizhard-ota /ota
 
 # Set the default command
-CMD ["/prog"]
+CMD ["/ota"]

@@ -2,25 +2,15 @@
 name = "charizhard-ota"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.85"
 
 [dependencies]
-anyhow = "1.0.95"
-async-std = { version = "1.8.0", features = ["attributes"] }
-axum = {version = "0.7.9", features = ["json"]}
-cargo-todos = "0.1.0"
-env_logger = "0.11.6"
-futures-util = "0.3.31"
-http-body-util = "0.1.2"
-jsonwebtoken = "8.1.1"
-regex = "1.11.1"
-reqwest = { version = "0.12.11" , features =["json"] }
-serde = "1.0.216"
-serde_json = "1.0.134"
-tempfile = "3.14.0"
-tokio = { version = "1.42.0", features = ["full"] }
-tokio-util = { version = "0.7.13", features = ["io"] }
-tracing-subscriber = "0.3.19"
-axum-keycloak-auth = { git = "https://github.com/dspicher/axum-keycloak-auth.git" }
-openssl = { version = "0.10", features = ["vendored"] }
-minio-rsc = "0.2.3"
-
+anyhow = "1.0"
+axum = {version = "0.8", features = ["json"]}
+regex = "1.11"
+reqwest = { version = "0.12" , features =["json"] }
+serde = "1.0"
+tokio = { version = "1.42", features = ["full"] }
+tracing-subscriber = "0.3"
+axum-keycloak-auth = "0.8"
+minio-rsc = "0.2"

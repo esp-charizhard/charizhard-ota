@@ -14,7 +14,7 @@ env:
 
 jobs:
   build:
-    runs-on: self-hosted
+    runs-on: ubuntu
 
     steps:
       # Step 1: Checkout the code
@@ -47,5 +47,5 @@ jobs:
           platforms: linux/amd64
           push: true  # Changed from false to true to push the image
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/your-repo-name:${{ github.sha }}
-            ${{ secrets.DOCKER_USERNAME }}/your-repo-name:latest
+            ${{ secrets.DOCKER_USERNAME }}/ota:${{ github.sha }}
+            ${{ secrets.DOCKER_USERNAME }}/ota:latest

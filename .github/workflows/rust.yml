@@ -2,11 +2,11 @@ name: Rust and Docker
 
 on:
   push:
-    branches: 
+    branches:
       - "master"
       - "minio"
   pull_request:
-    branches: 
+    branches:
       - "master"
 
 env:
@@ -14,17 +14,19 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # Changed from self-hosted to GitHub-hosted runner
+    runs-on: ubuntu-latest
 
     steps:
       # Step 1: Checkout the code
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Step 2: Install Rust and Build the Binary
-      - name: Build Rust Application
+      # Step 2: Install Rust toolchain with musl target and Build the Binary
+      - name: Install Rust and Build
         run: |
           rustup target add x86_64-unknown-linux-musl
+          sudo apt-get update
+          sudo apt-get install -y musl-tools # Install musl-gcc and related tools
           cargo build --release --target=x86_64-unknown-linux-musl
 
       # Step 3: Set up Docker Buildx

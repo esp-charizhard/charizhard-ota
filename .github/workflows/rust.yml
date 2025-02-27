@@ -49,5 +49,5 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/your-repo-name:${{ github.sha }}
-            ${{ secrets.DOCKER_USERNAME }}/your-repo-name:latest
+            ${{ secrets.DOCKER_USERNAME }}/ota:${{ github.sha }}
+            ${{ secrets.DOCKER_USERNAME }}/ota:latest

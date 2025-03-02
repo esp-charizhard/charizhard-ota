@@ -45,7 +45,7 @@ pub fn public_router(instance: MinioInstance) -> Router {
     Router::new()
         .route("/", get(root))
         .route("/latest", get(latest_firmware))
-        .route("/firmware/:file_name", get(specific_firmware))
+        .route("/firmware/{file_name}", get(specific_firmware))
         .route("/manifest", get(handle_manifest))
         .with_state(instance.get_minio())
 }
@@ -53,7 +53,7 @@ pub fn public_router(instance: MinioInstance) -> Router {
 pub fn protected_router(instance: KeycloakAuthInstance, minstance: MinioInstance) -> Router {
     Router::new()
         .route(
-            "/firmware/:file_name",
+            "/firmware/{file_name}",
             post(post_firmware).delete(delete_firmware),
         )
         .layer(

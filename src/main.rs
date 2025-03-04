@@ -28,12 +28,12 @@ impl MinioInstance {
             None => return Err(Error::msg("Env varibles not found")),
         };
 
-        let ip_addr = env::var("IP_MINIO")?;
-        let port = env::var("PORT_MINIO")?;
-        let endpoint = ip_addr + ":" + &port;
+        //let ip_addr = env::var("IP_MINIO")?;
+        //let port = env::var("PORT_MINIO")?;
+        //let endpoint = ip_addr + ":" + &port;
 
         let minio = Minio::builder()
-            .endpoint(endpoint) //where to look for database
+            .endpoint("minio-service.minio-tenant.svc.cluster.local:9000") //where to look for database
             .provider(provider)
             .secure(false)
             .build()?;
@@ -77,14 +77,14 @@ async fn main() -> Result<(), Error> {
     // initialize tracing
     tracing_subscriber::fmt::init();
 
-    let ip_kc = env::var("IP_KC")?;
-    let port_kc = env::var("PORT_KC")?;
-    let url_kc = ip_kc + ":" + &port_kc;
+    //let ip_kc = env::var("IP_KC")?;
+    //let port_kc = env::var("PORT_KC")?;
+    //let url_kc = ip_kc + ":" + &port_kc;
 
     let keycloak_auth_instance = KeycloakAuthInstance::new(
         KeycloakConfig::builder()
             // a modifier évidemment au deployement
-            .server(Url::parse(&url_kc).unwrap())
+            .server(Url::parse("keycloak-service.keycloak.svc.cluster.local:8080").unwrap())
             .realm(String::from("charizhard-ota"))
             .build(),
     );

@@ -12,7 +12,7 @@ use charizhard_ota::route::{root, specific_firmware};
 use minio_rsc::{provider::StaticProvider, Minio};
 use reqwest::Url;
 use route::{delete_firmware, fallback, handle_manifest, latest_firmware, post_firmware};
-use std::result::Result::Ok;
+use std::{env, result::Result::Ok};
 mod route;
 
 #[derive(Clone)]
@@ -28,8 +28,12 @@ impl MinioInstance {
             None => return Err(Error::msg("Env varibles not found")),
         };
 
+        let ip_addr = env::var("IP_MINIO")?;
+        let port = env::var("PORT_MINIO")?;
+        let endpoint = ip_addr + ":" + &port;
+
         let minio = Minio::builder()
-            .endpoint("10.10.35.70:9000") //where to look for database
+            .endpoint(endpoint) //where to look for database
             .provider(provider)
             .secure(false)
             .build()?;
@@ -73,10 +77,14 @@ async fn main() -> Result<(), Error> {
     // initialize tracing
     tracing_subscriber::fmt::init();
 
+    let ip_kc = env::var("IP_KC")?;
+    let port_kc = env::var("PORT_KC")?;
+    let url_kc = ip_kc + ":" + &port_kc;
+
     let keycloak_auth_instance = KeycloakAuthInstance::new(
         KeycloakConfig::builder()
             // a modifier évidemment au deployement
-            .server(Url::parse("http://10.10.35.69:8080/").unwrap())
+            .server(Url::parse(&url_kc).unwrap())
             .realm(String::from("charizhard-ota"))
             .build(),
     );

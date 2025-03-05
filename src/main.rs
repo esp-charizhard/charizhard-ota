@@ -84,7 +84,7 @@ async fn main() -> Result<(), Error> {
     let keycloak_auth_instance = KeycloakAuthInstance::new(
         KeycloakConfig::builder()
             // a modifier évidemment au deployement
-            .server(Url::parse("keycloak-service.keycloak.svc.cluster.local:8080").unwrap())
+            .server(Url::parse("http://keycloak-service.keycloak.svc.cluster.local:8080").unwrap())
             .realm(String::from("charizhard-ota"))
             .build(),
     );

@@ -33,7 +33,7 @@ impl MinioInstance {
         //let endpoint = ip_addr + ":" + &port;
 
         let minio = Minio::builder()
-            .endpoint("minio-service.minio-tenant.svc.cluster.local:9000") //where to look for database
+            .endpoint("minio-service.minio.svc.cluster.local:9000") //where to look for database
             .provider(provider)
             .secure(false)
             .build()?;

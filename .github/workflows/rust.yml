@@ -13,8 +13,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Run Cargo Check
-        run: cargo check --all-targets --all-features
       # Step 1: Checkout the code
       - name: Checkout Code
         uses: actions/checkout@v4

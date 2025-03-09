@@ -8,10 +8,11 @@ use axum::{
     Json,
 };
 use minio_rsc::{client::ListObjectsArgs, Minio};
+use crate::route::utils::get_file;
 use regex::Regex;
 use reqwest::Method;
 use serde::Serialize;
-use utils::get_file;
+use utils::parse_client_json;
 mod utils;
 
 const FIRMWARE_DIR: &str = "bin";
@@ -128,9 +129,9 @@ pub async fn specific_firmware(
     return get_file(instance, &file_name).await;
 }
 
-//curl -X POST http://localhost:8080/firmware/charizhard.V1.3.bin \
-//  -T ./firmware.bin \
-//  -H "Authorization: Bearer $JWT_TOKEN"
+// //curl -X POST http://localhost:8080/firmware/charizhard.V1.3.bin \
+// //  -T ./firmware.bin \
+// //  -H "Authorization: Bearer $JWT_TOKEN"
 pub async fn post_firmware(
     AxumPath(file_name): AxumPath<String>,
     State(instance): State<Minio>,
@@ -188,3 +189,90 @@ pub async fn delete_firmware(
 pub async fn fallback() -> (StatusCode, &'static str) {
     (StatusCode::NOT_FOUND, "Not Found")
 }
+
+
+/// Handles the WireGuard configuration request by retrieving the configuration
+/// file from the "config-wg" bucket in Minio and parsing it based on the
+/// `id_client_x` header from the request. Returns the parsed configuration or
+/// an error message if the operation fails.
+/// 
+/// # Arguments
+/// 
+/// * `State(instance)`: Minio instance used to interact with the object storage.
+/// * `req`: The HTTP request containing headers with client information.
+/// 
+/// # Returns
+/// 
+/// An HTTP response indicating the status of the operation:
+/// * `StatusCode::OK` with "LOADING CONFIG" if the configuration is successfully loaded.
+/// * `StatusCode::NO_CONTENT` if no files are found in the bucket.
+/// * `StatusCode::INTERNAL_SERVER_ERROR` with an error message if an error occurs.
+/// 
+/// # Errors
+/// 
+/// Returns an error if:
+/// * The `id_client_x` header is missing or invalid.
+/// * There is an error querying the bucket or retrieving the file.
+/// * The configuration cannot be parsed successfully.
+
+#[axum::debug_handler]
+pub async fn config_wg(State(instance): State<Minio>,req: Request) -> impl IntoResponse {
+    // println!("hello endpoint reached");
+    let args = ListObjectsArgs::default();
+    let query = instance.list_objects("config-wg", args).await;
+    let headers = req.headers();
+    // println!("Headers: {:#?}", headers.get("id_client_x"));
+    let mut id_client_x_value = "";
+    let mut config = None;
+    if let Some(id_client_x) = headers.get("id_client_x") {
+        id_client_x_value = id_client_x.to_str().unwrap();
+        // println!("{:?}",id_client_x_value);
+    } else {
+        println!("Bad header");
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Bad header".to_string(),
+        )
+    }
+    match query {
+        Ok(res) => {
+            let file_list: Vec<String> = res
+                .contents
+                .iter()
+                .map(|object| object.key.clone()) 
+                .collect();
+            let file = instance.get_object("config-wg",&file_list[0]).await;
+            match file {
+                Ok(response) => {
+                    let contents = response.text().await.unwrap();
+                    // println!("Contenu du fichier : {}", contents);
+                    config = parse_client_json(&contents, &id_client_x_value);
+                    println!("Config : {:?}", config);
+                }
+                Err(e) => {
+                    println!("Erreur lors de la récupération du contenu du fichier : {}", e);
+                }
+            }
+            // for file in &file_list {
+            //     println!("Fichier trouvé : {}", file);
+            // }
+
+            if file_list.is_empty() {
+                return (
+                    StatusCode::NO_CONTENT,
+                    "No Files Found in Bucket".to_string(),
+                );
+            }
+
+            (
+                StatusCode::OK,
+                "LOADING CONFIG".to_string(),//TODO à modif pour renvoyer la config une fois le tls/mtls ok
+            )
+        }
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Error deleting firmware {}", e)
+        ),
+    }
+}
+

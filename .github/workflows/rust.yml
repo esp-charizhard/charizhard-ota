@@ -4,10 +4,6 @@ on:
   push:
     branches:
       - "master"
-      - "minio"
-  pull_request:
-    branches:
-      - "master"
 
 env:
   CARGO_TERM_COLOR: always
@@ -17,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Check format
+        run: cargo fmt --check
       # Step 1: Checkout the code
       - name: Checkout Code
         uses: actions/checkout@v4

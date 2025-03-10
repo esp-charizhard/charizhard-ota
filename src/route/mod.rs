@@ -218,7 +218,7 @@ pub async fn fallback() -> (StatusCode, &'static str) {
 #[axum::debug_handler]
 #[allow(unused_assignments)]
 pub async fn config_wg(State(instance): State<Minio>,req: Request) -> impl IntoResponse {
-    // println!("hello endpoint reached");
+    println!("hello endpoint reached");
     let args = ListObjectsArgs::default();
     let query = instance.list_objects("config-wg", args).await;
     let headers = req.headers();
@@ -247,7 +247,7 @@ pub async fn config_wg(State(instance): State<Minio>,req: Request) -> impl IntoR
                 Ok(response) => {
                     let contents = response.text().await.unwrap();
                     // println!("Contenu du fichier : {}", contents);
-                    config = parse_client_json(&contents, &id_client_x_value);
+                    config = parse_client_json(&contents, id_client_x_value);
                     println!("Config : {:?}", config);
                 }
                 Err(e) => {

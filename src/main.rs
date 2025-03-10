@@ -40,7 +40,7 @@ impl MinioInstance {
 
         println!("Minio: Attempting to connect to database at localhost:9000");
         let minio = Minio::builder()
-            .endpoint("localhost:9000") //where to look for database
+            .endpoint("minio-service.minio.svc.cluster.local:9000") //where to look for database
             .provider(provider)
             .secure(false)
             .build()?;
@@ -95,7 +95,7 @@ async fn main() -> Result<(), Error> {
     let keycloak_auth_instance = KeycloakAuthInstance::new(
         KeycloakConfig::builder()
             // a modifier évidemment au deployement
-            .server(Url::parse("http://localhost:8080").unwrap())
+            .server(Url::parse("http://keycloak-service.keycloak.svc.cluster.local:8080").unwrap())
             .realm(String::from("charizhard-ota"))
             .build(),
     );
@@ -107,7 +107,7 @@ async fn main() -> Result<(), Error> {
         .fallback(fallback);
 
     // 0.0.0.0 signifie qu'on écoute sur toutes les nci
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:8082").await?;
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8081").await?;
     axum::serve(listener, router.into_make_service()).await?;
     Ok(())
 }

@@ -24,10 +24,10 @@ impl MinioInstance {
     pub fn new() -> Result<MinioInstance, anyhow::Error> {
         // setup database config
         println!("Minio: Attempting to load configuration from environment");
-        let access_key = env::var("MINIO_SECRET_KEY").unwrap_or_else(|_| "Not Set".to_string());
-        let secret_key = env::var("MINIO_ACCESS_KEY").unwrap_or_else(|_| "Not Set".to_string());
-        println!("Debug - MINIO_ACCESS_KEY: {}", access_key);
-        println!("Debug - MINIO_SECRET_KEY: {}", secret_key);
+        // let access_key = env::var("MINIO_SECRET_KEY").unwrap_or_else(|_| "Not Set".to_string());
+        // let secret_key = env::var("MINIO_ACCESS_KEY").unwrap_or_else(|_| "Not Set".to_string());
+        // println!("Debug - MINIO_ACCESS_KEY: {}", access_key);
+        // println!("Debug - MINIO_SECRET_KEY: {}", secret_key);
         let provider = match StaticProvider::from_env() {
             Some(provider) => provider,
             None => return Err(Error::msg("Env varibles not found")),

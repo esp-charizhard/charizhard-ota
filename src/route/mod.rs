@@ -216,6 +216,7 @@ pub async fn fallback() -> (StatusCode, &'static str) {
 /// * The configuration cannot be parsed successfully.
 
 #[axum::debug_handler]
+#[allow(unused_assignments)]
 pub async fn config_wg(State(instance): State<Minio>,req: Request) -> impl IntoResponse {
     // println!("hello endpoint reached");
     let args = ListObjectsArgs::default();

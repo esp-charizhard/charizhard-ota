@@ -12,7 +12,7 @@ use charizhard_ota::route::{root, specific_firmware};
 use minio_rsc::{provider::StaticProvider, Minio};
 use reqwest::Url;
 use route::{delete_firmware, fallback, handle_manifest, latest_firmware, post_firmware,config_wg};
-use std::{env, result::Result::Ok};
+use std::result::Result::Ok;
 mod route;
 
 #[derive(Clone)]

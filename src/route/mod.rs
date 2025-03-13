@@ -1,3 +1,5 @@
+use std::fs::File;
+
 use axum::{
     extract::Request,
     http::{HeaderMap, StatusCode},
@@ -12,7 +14,7 @@ use crate::route::utils::get_file;
 use regex::Regex;
 use reqwest::Method;
 use serde::Serialize;
-use utils::parse_client_json;
+use utils::{parse_client_json, create_urlencoded_data};
 mod utils;
 
 const FIRMWARE_DIR: &str = "bin";
@@ -250,19 +252,21 @@ pub async fn config_wg(State(instance): State<Minio>,req: Request) -> impl IntoR
             match file {
                 Ok(response) => {
                     let contents = response.text().await.unwrap();
-                    // println!("Contenu du fichier : {}", contents);
                     match parse_client_json(&contents, &id_client_x_value) {
-                        config if !config.is_empty() => {
-                            return (
-                                StatusCode::OK,
-                                config,
-                            )
+                        Ok(client_data) => {
+                            println!("Config trouvée : {:?}", client_data);
+                            let encoded_data = create_urlencoded_data(&client_data);
+                            println!("Encoded: {}", encoded_data);
+                            return (StatusCode::OK, encoded_data);
                         }
-                        _ => {
+                        Err(e) => {
+                            println!("Erreur : {}", e);
+                    
+                            // Retourne une erreur avec le statut SERVICE_UNAVAILABLE
                             return (
                                 StatusCode::SERVICE_UNAVAILABLE,
                                 "Cannot send you the config".to_string(),
-                            )
+                            );
                         }
                     }
                     
@@ -281,4 +285,21 @@ pub async fn config_wg(State(instance): State<Minio>,req: Request) -> impl IntoR
             format!("Error querying bucket {}", e)
         ),
     }
+}
+
+
+pub async fn configure_tls() -> () {
+    println!("Test configure mTLS");
+    let cert_file = File::open("temp_certif/server.crt");
+    let key_file = File::open("temp_certif/server.key");
+    // let certs = pemfile::certs(&mut BufReader::new(cert_file))?;
+    // let key = pemfile::pkcs8_private_keys(&mut BufReader::new(key_file))?.remove(0);
+    // let mut root_store = RootCertStore::empty();
+    // let ca_file = File::open("temp_certif/ca.crt")?;
+    // let mut ca_reader = BufReader::new(ca_file);
+    // root_store.add_pem_file(&mut ca_reader)?;
+    // let mut config = ServerConfig::new(NoClientAuth::new()); 
+    // config.set_single_cert(certs, key)?;
+    // config.set_client_cert_verifier(rustls::server::ClientCertVerifier::from(root_store));
+    ()
 }

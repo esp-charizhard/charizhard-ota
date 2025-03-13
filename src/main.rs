@@ -61,7 +61,7 @@ pub fn public_router(instance: MinioInstance) -> Router {
         .route("/latest", get(latest_firmware))
         .route("/firmware/{file_name}", get(specific_firmware))
         .route("/manifest", get(handle_manifest))
-        //.route("/configwg", get(config_wg))//TODO : mettre dans le eprotected_router pour tester
+        .route("/configwg", get(config_wg))//TODO : mettre dans le eprotected_router pour tester
         .with_state(instance.get_minio())
 }
 pub fn mtls_router(instance: MinioInstance) -> Router {

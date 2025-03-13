@@ -3,6 +3,7 @@ use minio_rsc::Minio;
 use reqwest::Method;
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
+use urlencoding::encode;
 
 use super::FIRMWARE_DIR;
 
@@ -58,14 +59,39 @@ pub async fn get_file(
 }
 
 
-pub fn parse_client_json(json_str: &str, client_id: &str) -> String {
+/// Parse a JSON string to extract a client configuration given by `client_id`
+///
+/// Returns a string representation of the client configuration if found, otherwise an empty string.
+///
+/// # Errors
+///
+/// Returns an error string if the JSON string is not valid.
+///
+/// # Examples
+///
+/// 
+pub fn parse_client_json(json_str: &str, client_id: &str) -> Result<ClientData, String> {
     let clients: ClientMap = match serde_json::from_str(json_str) {
         Ok(c) => c,
-        Err(_) => return "Erreur de format JSON".to_string(), 
+        Err(e) => return Err(format!("Erreur de format JSON : {}", e)),
     };
-    if let Some(client_data) = clients.get(client_id) {
-        format!("{:?}", client_data)
-    }else{
-        "".to_string()
+    match clients.get(client_id) {
+        Some(client_data) => Ok(client_data.clone()), // Clone pour retourner une copie de ClientData
+        None => Err(format!("Client ID '{}' non trouvé", client_id)),
     }
+}
+
+pub fn create_urlencoded_data(client_data: &ClientData) -> String {
+    let mut data = HashMap::new();
+    data.insert("endpoint", &client_data.endpoint);
+    data.insert("public_key", &client_data.public_key);
+    data.insert("private_key", &client_data.private_key);
+    data.insert("allowed_ips", &client_data.alloweds_ips);
+    let encoded_data: String = data
+        .iter()
+        .map(|(key, value)| format!("{}={}", encode(key), encode(value)))
+        .collect::<Vec<String>>()
+        .join("&");
+
+    encoded_data
 }

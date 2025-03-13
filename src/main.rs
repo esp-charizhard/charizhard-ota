@@ -12,7 +12,8 @@ use charizhard_ota::route::{root, specific_firmware};
 use minio_rsc::{provider::StaticProvider, Minio};
 use reqwest::Url;
 use route::{delete_firmware, fallback, handle_manifest, latest_firmware, post_firmware,config_wg};
-use std::result::Result::Ok;
+use std::{net::SocketAddr, result::Result::Ok};
+use axum_server::tls_rustls::RustlsConfig;
 mod route;
 
 #[derive(Clone)]
@@ -60,6 +61,11 @@ pub fn public_router(instance: MinioInstance) -> Router {
         .route("/latest", get(latest_firmware))
         .route("/firmware/{file_name}", get(specific_firmware))
         .route("/manifest", get(handle_manifest))
+        //.route("/configwg", get(config_wg))//TODO : mettre dans le eprotected_router pour tester
+        .with_state(instance.get_minio())
+}
+pub fn mtls_router(instance: MinioInstance) -> Router {
+    Router::new()
         .route("/configwg", get(config_wg))//TODO : mettre dans le eprotected_router pour tester
         .with_state(instance.get_minio())
 }
@@ -87,7 +93,12 @@ pub fn protected_router(instance: KeycloakAuthInstance, minstance: MinioInstance
 async fn main() -> Result<(), Error> {
     // initialize tracing
     tracing_subscriber::fmt::init();
-
+    let tls_config = RustlsConfig::from_pem_file(
+        "temp_certif/server.crt",
+        "temp_certif/server.key",
+    )
+    .await
+    .expect("Failed to load TLS certificates");
     //let ip_kc = env::var("IP_KC")?;
     //let port_kc = env::var("PORT_KC")?;
     //let url_kc = ip_kc + ":" + &port_kc;
@@ -105,9 +116,22 @@ async fn main() -> Result<(), Error> {
     // let router = public_router();
         .merge(protected_router(keycloak_auth_instance, minstance.clone()))
         .fallback(fallback);
-
+    let https_app = mtls_router(minstance.clone())
+        .fallback(fallback);
     // 0.0.0.0 signifie qu'on écoute sur toutes les nci
     let listener = tokio::net::TcpListener::bind("127.0.0.1:8082").await?;
-    axum::serve(listener, router.into_make_service()).await?;
+    tokio::spawn(async move {
+        println!("HTTP listening on 127.0.0.1:8082");
+        axum::serve(listener, router.into_make_service())
+            .await
+            .unwrap();
+    });
+
+    let listener2 = SocketAddr::from(([127, 0, 0, 1], 8083));
+    println!("https listening on {}", listener2);
+    axum_server::bind_rustls(listener2, tls_config)
+    .serve(https_app.into_make_service())
+    .await?;
+
     Ok(())
 }

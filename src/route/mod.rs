@@ -191,50 +191,54 @@ pub async fn fallback() -> (StatusCode, &'static str) {
 }
 
 
-/// Handles the WireGuard configuration request by retrieving the configuration
-/// file from the "config-wg" bucket in Minio and parsing it based on the
-/// `id_client_x` header from the request. Returns the parsed configuration or
-/// an error message if the operation fails.
+
+
+
+/// Handles the configuration retrieval for a specific client.
+/// 
+/// This function processes an incoming HTTP request to obtain a WireGuard configuration
+/// for a specific client identified by the "id_client_x" header. It interacts with a Minio
+/// storage instance to list and retrieve configuration files from the "config-wg" bucket.
 /// 
 /// # Arguments
 /// 
-/// * `State(instance)`: Minio instance used to interact with the object storage.
-/// * `req`: The HTTP request containing headers with client information.
+/// * `State(instance)`: A Minio storage instance used for listing and retrieving objects.
+/// * `req`: The incoming HTTP request containing headers used to identify the client.
 /// 
 /// # Returns
 /// 
-/// An HTTP response indicating the status of the operation:
-/// * `StatusCode::OK` with "LOADING CONFIG" if the configuration is successfully loaded.
-/// * `StatusCode::NO_CONTENT` if no files are found in the bucket.
-/// * `StatusCode::INTERNAL_SERVER_ERROR` with an error message if an error occurs.
-/// 
-/// # Errors
-/// 
-/// Returns an error if:
-/// * The `id_client_x` header is missing or invalid.
-/// * There is an error querying the bucket or retrieving the file.
-/// * The configuration cannot be parsed successfully.
+/// An HTTP response indicating the success or failure of the operation. It returns:
+/// - `StatusCode::OK` with the configuration if retrieval is successful.
+/// - `StatusCode::BAD_REQUEST` if the "id_client_x" header is missing or invalid.
+/// - `StatusCode::SERVICE_UNAVAILABLE` if the configuration cannot be sent.
+/// - `StatusCode::INTERNAL_SERVER_ERROR` if there is an error querying the bucket or retrieving file content.
 
 #[axum::debug_handler]
 #[allow(unused_assignments)]
 pub async fn config_wg(State(instance): State<Minio>,req: Request) -> impl IntoResponse {
-    println!("hello endpoint reached");
+    let headers = req.headers();
+    let id_client_x_value = match headers.get("id_client_x") {
+        Some(value) => match value.to_str() {
+            Ok(v) => v.to_string(),
+            Err(_) => {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    "Invalid 'id_client_x' header".to_string(),
+                );
+            }
+        },
+        None => {
+            return(
+                StatusCode::BAD_REQUEST,
+                "Missing 'id_client_x' header".to_string(),
+            );
+        }
+    };
+
     let args = ListObjectsArgs::default();
     let query = instance.list_objects("config-wg", args).await;
-    let headers = req.headers();
-    // println!("Headers: {:#?}", headers.get("id_client_x"));
-    let mut id_client_x_value = "";
-    let mut config = None;
-    if let Some(id_client_x) = headers.get("id_client_x") {
-        id_client_x_value = id_client_x.to_str().unwrap();
-        // println!("{:?}",id_client_x_value);
-    } else {
-        println!("Bad header");
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Bad header".to_string(),
-        )
-    }
+
+
     match query {
         Ok(res) => {
             let file_list: Vec<String> = res
@@ -247,33 +251,34 @@ pub async fn config_wg(State(instance): State<Minio>,req: Request) -> impl IntoR
                 Ok(response) => {
                     let contents = response.text().await.unwrap();
                     // println!("Contenu du fichier : {}", contents);
-                    config = parse_client_json(&contents, id_client_x_value);
-                    println!("Config : {:?}", config);
+                    match parse_client_json(&contents, &id_client_x_value) {
+                        config if !config.is_empty() => {
+                            return (
+                                StatusCode::OK,
+                                config,
+                            )
+                        }
+                        _ => {
+                            return (
+                                StatusCode::SERVICE_UNAVAILABLE,
+                                "Cannot send you the config".to_string(),
+                            )
+                        }
+                    }
+                    
                 }
                 Err(e) => {
                     println!("Erreur lors de la récupération du contenu du fichier : {}", e);
+                    return(
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        "Cannot send you the config".to_string(),
+                    )
                 }
             }
-            // for file in &file_list {
-            //     println!("Fichier trouvé : {}", file);
-            // }
-
-            if file_list.is_empty() {
-                return (
-                    StatusCode::NO_CONTENT,
-                    "No Files Found in Bucket".to_string(),
-                );
-            }
-
-            (
-                StatusCode::OK,
-                "LOADING CONFIG".to_string(),//TODO à modif pour renvoyer la config une fois le tls/mtls ok
-            )
         }
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Error deleting firmware {}", e)
+            format!("Error querying bucket {}", e)
         ),
     }
 }
-

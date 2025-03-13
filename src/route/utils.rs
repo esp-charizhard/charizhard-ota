@@ -58,15 +58,14 @@ pub async fn get_file(
 }
 
 
-/// Parse a json string containing a hashmap of client data
-/// and return the data for the given client_id.
-/// Return None if the client_id is not found.
-pub fn parse_client_json(json_str: &str, client_id: &str) -> Option<ClientData> {
-    let clients: ClientMap = serde_json::from_str(json_str).ok()?;
-    if clients.contains_key(client_id) {
-        clients.get(client_id).cloned()
-    } else {
-        println!("Client avec l'ID '{}' non trouvé.", client_id); 
-        None
+pub fn parse_client_json(json_str: &str, client_id: &str) -> String {
+    let clients: ClientMap = match serde_json::from_str(json_str) {
+        Ok(c) => c,
+        Err(_) => return "Erreur de format JSON".to_string(), 
+    };
+    if let Some(client_data) = clients.get(client_id) {
+        format!("{:?}", client_data)
+    }else{
+        "".to_string()
     }
 }

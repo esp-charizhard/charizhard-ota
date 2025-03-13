@@ -8,12 +8,13 @@ use axum_keycloak_auth::{
     layer::KeycloakAuthLayer,
     PassthroughMode,
 };
-use charizhard_ota::route::{root, specific_firmware};
+use charizhard_ota::route::{configure_server_tls, root, specific_firmware};
 use minio_rsc::{provider::StaticProvider, Minio};
 use reqwest::Url;
 use route::{delete_firmware, fallback, handle_manifest, latest_firmware, post_firmware,config_wg};
-use std::{net::SocketAddr, result::Result::Ok};
+use std::{net::SocketAddr, result::Result::Ok, sync::Arc};
 use axum_server::tls_rustls::RustlsConfig;
+use tokio_rustls::TlsAcceptor;
 mod route;
 
 #[derive(Clone)]
@@ -99,6 +100,8 @@ async fn main() -> Result<(), Error> {
     )
     .await
     .expect("Failed to load TLS certificates");
+    let tls_config2 = configure_server_tls("temp_certif/server.crt","temp_certif/server.key","temp_certif/ca.crt");
+    let tls_config3 = RustlsConfig::from_config(Arc::clone(&tls_config2));
     //let ip_kc = env::var("IP_KC")?;
     //let port_kc = env::var("PORT_KC")?;
     //let url_kc = ip_kc + ":" + &port_kc;
@@ -129,7 +132,7 @@ async fn main() -> Result<(), Error> {
 
     let listener2 = SocketAddr::from(([127, 0, 0, 1], 8083));
     println!("https listening on {}", listener2);
-    axum_server::bind_rustls(listener2, tls_config)
+    axum_server::bind_rustls(listener2, tls_config3)
     .serve(https_app.into_make_service())
     .await?;
 

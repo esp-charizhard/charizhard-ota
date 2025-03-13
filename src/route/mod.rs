@@ -1,4 +1,5 @@
-use std::fs::File;
+
+use std::sync::Arc;
 
 use axum::{
     extract::Request,
@@ -14,7 +15,14 @@ use crate::route::utils::get_file;
 use regex::Regex;
 use reqwest::Method;
 use serde::Serialize;
-use utils::{parse_client_json, create_urlencoded_data};
+
+//TEST mTLS
+
+use rustls_pemfile::{certs, rsa_private_keys, Item};
+use rustls::{pki_types, server::WebPkiClientVerifier, RootCertStore, ServerConfig};
+
+//END TEST mTLS
+use utils::{parse_client_json, create_urlencoded_data,load_certs,load_private_key};
 mod utils;
 
 const FIRMWARE_DIR: &str = "bin";
@@ -288,18 +296,25 @@ pub async fn config_wg(State(instance): State<Minio>,req: Request) -> impl IntoR
 }
 
 
-pub async fn configure_tls() -> () {
-    println!("Test configure mTLS");
-    let cert_file = File::open("temp_certif/server.crt");
-    let key_file = File::open("temp_certif/server.key");
-    // let certs = pemfile::certs(&mut BufReader::new(cert_file))?;
-    // let key = pemfile::pkcs8_private_keys(&mut BufReader::new(key_file))?.remove(0);
-    // let mut root_store = RootCertStore::empty();
-    // let ca_file = File::open("temp_certif/ca.crt")?;
-    // let mut ca_reader = BufReader::new(ca_file);
-    // root_store.add_pem_file(&mut ca_reader)?;
-    // let mut config = ServerConfig::new(NoClientAuth::new()); 
-    // config.set_single_cert(certs, key)?;
-    // config.set_client_cert_verifier(rustls::server::ClientCertVerifier::from(root_store));
-    ()
+pub fn configure_server_tls(cert_path: &str,key_path: &str,ca_cert_path: &str) -> Arc<ServerConfig>{
+    println!("Configuring mTLS server");
+    let certs = load_certs(cert_path).expect("Erreur load_certs");
+    let ca_certs = load_certs(ca_cert_path).expect("Erreur load_certs pour CA");
+    let key = load_private_key(key_path).expect("Erreur load_private_key");
+    println!("end load certifs/keys");
+    let mut client_auth_roots = RootCertStore::empty();
+    for cert in ca_certs {
+       client_auth_roots.add(cert).expect("Erreur ajout certificat CA");
+    }
+
+    let client_auth = WebPkiClientVerifier::builder(client_auth_roots.into())
+        .build()
+        .expect("Erreur création WebPkiClientVerifier");
+    
+    let config = ServerConfig::builder()
+       .with_client_cert_verifier(client_auth) 
+       .with_single_cert(certs, key)
+       .expect("Erreur configuration serveur TLS");
+
+    Arc::new(config)
 }

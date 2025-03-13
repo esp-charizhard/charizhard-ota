@@ -7,7 +7,6 @@ use urlencoding::encode;
 use rustls_pemfile::{certs, pkcs8_private_keys};
 use std::fs::File;
 use std::io::{self, BufReader};
-use rustls::{ServerConfig, ClientConfig, RootCertStore};
 use rustls::pki_types::{CertificateDer, PrivateKeyDer};
 use super::FIRMWARE_DIR;
 

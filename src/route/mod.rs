@@ -18,8 +18,8 @@ use serde::Serialize;
 
 //TEST mTLS
 
-use rustls_pemfile::{certs, rsa_private_keys, Item};
-use rustls::{pki_types, server::WebPkiClientVerifier, RootCertStore, ServerConfig};
+
+use rustls::{server::WebPkiClientVerifier, RootCertStore, ServerConfig};
 
 //END TEST mTLS
 use utils::{parse_client_json, create_urlencoded_data,load_certs,load_private_key};
@@ -295,13 +295,13 @@ pub async fn config_wg(State(instance): State<Minio>,req: Request) -> impl IntoR
     }
 }
 
-
+#[allow(dead_code)]
 pub fn configure_server_tls(cert_path: &str,key_path: &str,ca_cert_path: &str) -> Arc<ServerConfig>{
-    println!("Configuring mTLS server");
+    //println!("Configuring mTLS server");
     let certs = load_certs(cert_path).expect("Erreur load_certs");
     let ca_certs = load_certs(ca_cert_path).expect("Erreur load_certs pour CA");
     let key = load_private_key(key_path).expect("Erreur load_private_key");
-    println!("end load certifs/keys");
+    //println!("end load certifs/keys");
     let mut client_auth_roots = RootCertStore::empty();
     for cert in ca_certs {
        client_auth_roots.add(cert).expect("Erreur ajout certificat CA");

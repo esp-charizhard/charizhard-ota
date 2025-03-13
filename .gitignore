@@ -3,3 +3,4 @@
 .vscode
 .env
 Cargo.lock
+/temp_certif

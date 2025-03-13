@@ -14,7 +14,6 @@ use reqwest::Url;
 use route::{delete_firmware, fallback, handle_manifest, latest_firmware, post_firmware,config_wg};
 use std::{net::SocketAddr, result::Result::Ok, sync::Arc};
 use axum_server::tls_rustls::RustlsConfig;
-use tokio_rustls::TlsAcceptor;
 mod route;
 
 #[derive(Clone)]
@@ -94,12 +93,6 @@ pub fn protected_router(instance: KeycloakAuthInstance, minstance: MinioInstance
 async fn main() -> Result<(), Error> {
     // initialize tracing
     tracing_subscriber::fmt::init();
-    let tls_config = RustlsConfig::from_pem_file(
-        "temp_certif/server.crt",
-        "temp_certif/server.key",
-    )
-    .await
-    .expect("Failed to load TLS certificates");
     let tls_config2 = configure_server_tls("temp_certif/server.crt","temp_certif/server.key","temp_certif/ca.crt");
     let tls_config3 = RustlsConfig::from_config(Arc::clone(&tls_config2));
     //let ip_kc = env::var("IP_KC")?;

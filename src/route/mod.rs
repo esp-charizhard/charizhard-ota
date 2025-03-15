@@ -269,8 +269,6 @@ pub async fn config_wg(State(instance): State<Minio>,req: Request) -> impl IntoR
                         }
                         Err(e) => {
                             println!("Erreur : {}", e);
-                    
-                            // Retourne une erreur avec le statut SERVICE_UNAVAILABLE
                             return (
                                 StatusCode::SERVICE_UNAVAILABLE,
                                 "Cannot send you the config".to_string(),

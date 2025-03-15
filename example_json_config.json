@@ -1,16 +1,20 @@
 {
     "ID_CLIENT_123": {
-        "endpoint": "1.1.1.1:51820",
-        "public_key": "INSERT_PUB_KEY",
-        "private_key": "INSERT_PRV_KEY",
-        "alloweds_ips": "10.200.200.200/32",
-        "public_key_server": "INSERT_PUB_KEY"
+        "address": "1.1.1.1",
+        "port": "51820",
+        "privkey": "INSERT_PRV_KEY",
+        "pubkey": "INSERT_PUB_KEY",
+        "allowedip": "10.200.200.200",
+        "allowedmask":"255.255.255.254"
+       
     },
     "ID_CLIENT_1234": {
-        "endpoint": "1.1.1.1:51820",
-        "public_key": "INSERT_PUB_KEY",
-        "private_key": "INSERT_PRV_KEY",
-        "alloweds_ips": "10.200.200.201/32",
-        "public_key_server": "INSERT_PUB_KEY"
+        "address": "1.1.1.1",
+        "port": "51820",
+        "privkey": "INSERT_PRV_KEY",
+        "pubkey": "INSERT_PUB_KEY",
+        "allowedip": "10.200.200.200",
+        "allowedmask":"255.255.255.254"
+       
     }
 }

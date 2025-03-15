@@ -15,7 +15,6 @@ use route::{delete_firmware, fallback, handle_manifest, latest_firmware, post_fi
 use std::{net::SocketAddr, result::Result::Ok, sync::Arc};
 use axum_server::tls_rustls::RustlsConfig;
 mod route;
-
 #[derive(Clone)]
 pub struct MinioInstance {
     minio: Minio,

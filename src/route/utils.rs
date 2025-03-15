@@ -12,10 +12,12 @@ use super::FIRMWARE_DIR;
 
 #[derive(Serialize, Deserialize, Debug,Clone)]
 pub struct ClientData {
-    endpoint: String,
-    public_key: String,
-    private_key: String,
-    alloweds_ips: String,
+    address: String,
+    port: String,
+    privkey: String,
+    pubkey: String,
+    allowedip: String,
+    allowedmask: String, 
 }
 type ClientMap = HashMap<String, ClientData>;
 
@@ -102,18 +104,52 @@ pub fn parse_client_json(json_str: &str, client_id: &str) -> Result<ClientData, 
 /// assert_eq!(encoded_data, "endpoint=1.1.1.1%3A51820&public_key=INSERT_PUB_KEY&private_key=INSERT_PRV_KEY&allowed_ips=10.200.200.200%2F32");
 pub fn create_urlencoded_data(client_data: &ClientData) -> String {
     let mut data = HashMap::new();
-    data.insert("endpoint", &client_data.endpoint);
-    data.insert("public_key", &client_data.public_key);
-    data.insert("private_key", &client_data.private_key);
-    data.insert("allowed_ips", &client_data.alloweds_ips);
-    let encoded_data: String = data
+    
+    data.insert("address", &client_data.address);
+    data.insert("port", &client_data.port);
+    data.insert("privkey", &client_data.privkey);
+    data.insert("public_key_server", &client_data.pubkey);
+    data.insert("allowedip", &client_data.allowedip);
+    data.insert("allowedmask", &client_data.allowedmask);
+
+    let ordered_fields = vec![
+        ("address", &client_data.address),
+        ("port", &client_data.port),
+        ("privkey", &client_data.privkey),
+        ("pubkey", &client_data.pubkey),
+        ("allowedip", &client_data.allowedip),
+        ("allowedmask", &client_data.allowedmask),
+    ];
+
+    let encoded_data: String = ordered_fields
         .iter()
         .map(|(key, value)| format!("{}={}", encode(key), encode(value)))
         .collect::<Vec<String>>()
         .join("&");
 
+
     encoded_data
 }
+
+
+/// Loads certificates from a file path.
+///
+/// This function reads a file containing certificates in PEM format,
+/// parses them, and returns a vector of `CertificateDer`.
+///
+/// # Arguments
+///
+/// * `path` - A string slice that holds the path to the certificate file.
+///
+/// # Returns
+///
+/// A result containing a vector of `CertificateDer` on success, or an
+/// `io::Error` if an error occurs during file reading or parsing.
+///
+/// # Errors
+///
+/// This function will return an error if the file cannot be opened,
+/// or if the certificates cannot be parsed correctly.
 
 pub fn load_certs(path: &str) -> io::Result<Vec<CertificateDer<'static>>> {
     let file = File::open(path)?;
@@ -126,6 +162,25 @@ pub fn load_certs(path: &str) -> io::Result<Vec<CertificateDer<'static>>> {
         .map(CertificateDer::from)
         .collect())
 }
+
+/// Loads a private key from a file path.
+///
+/// This function reads a file containing a private key in PKCS#8 format,
+/// parses it, and returns a `PrivateKeyDer`.
+///
+/// # Arguments
+///
+/// * `path` - A string slice that holds the path to the private key file.
+///
+/// # Returns
+///
+/// A result containing a `PrivateKeyDer` on success, or an `io::Error` if an
+/// error occurs during file reading or parsing.
+///
+/// # Errors
+///
+/// This function will return an error if the file cannot be opened,
+/// if the private key is invalid, or if no private key is found.
 
 pub fn load_private_key(path: &str) -> io::Result<PrivateKeyDer<'static>> {
     let file = File::open(path)?;
